@@ -1,10 +1,11 @@
 import smtplib
+import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 import pandas as pd
-import json
+import ujson
 
 def exportar_inventario(archivo_excel, almacenes, archivo_config='cantidades_minimas.json', columna_codigo='Codigo', columna_producto='Producto', columna_cantidad='Cantidad'):
     """
@@ -32,8 +33,9 @@ def exportar_inventario(archivo_excel, almacenes, archivo_config='cantidades_min
             return
 
     # Cargar las cantidades mínimas desde el archivo JSON
-    with open(archivo_config, 'r') as f:
-        cantidades_minimas = json.load(f)
+    with open(archivo_config, 'r', encoding='utf-8') as f:
+    
+        cantidades_minimas = ujson.load(f)
 
     # Filtrar y agrupar
     df_filtrado = df[df['Almacen'].isin(almacenes)]
@@ -58,13 +60,25 @@ def exportar_inventario(archivo_excel, almacenes, archivo_config='cantidades_min
     print("Los resultados se han exportado a resultado_inventario.xlsx")
 
 
-def enviar_correo(archivo_excel):
-    # Datos de tu cuenta de correo (reemplaza con tus datos)
-    smtp_server = 'smtp.gmail.com'
+
+    # Enviar correo electrónico
+def enviar_correo():
+    """
+    Envía un correo electrónico con el informe de inventario generado.
+    """
+    # Validar existencia del archivo
+    if not os.path.isfile('resultado_inventario.xlsx'):
+        print("No se ha encontrado el archivo resultado_inventario.xlsx.")
+        return
+    
+    
+    
+    # Configuración del SMTP y datos de tu cuenta de correo (reemplaza con tus datos)
+    smtp_server ='smtp.gmail.com'
     port = 587
-    sender_email = 'tu_correo@gmail.com'
-    password = 'tu_contraseña'
-    receiver_email = 'destinatario@ejemplo.com'
+    sender_email = 'yelkindavid1997@gmail.com'
+    password = 'wfpc eihc ddxy dpvn'
+    receiver_email = 'barbara@lab-ol.com'
 
     # Crear mensaje
     message = MIMEMultipart()
@@ -73,23 +87,33 @@ def enviar_correo(archivo_excel):
     message['Subject'] = 'Informe de inventario'
     body = "Adjunto encontrarás el informe detallado del inventario."
     message.attach(MIMEText(body, 'plain'))
-
+    
     # Adjuntar archivo
-    filename = 'resultado_inventario.xlsx'
-    with open(filename, "rb") as attachment:
-        part = MIMEBase('application', 'octet-stream')
-        part.set_payload(attachment.read())
-    encoders.encode_base64(part) 
-
-    part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+    filename ='resultado_inventario.xlsx'
+    attachment = open(filename, 'rb')
+    part = MIMEBase('application', 'octet-stream')
+    part.set_payload(attachment.read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', f"attachment; filename={filename}")
     message.attach(part)
-
+    
 
     # Enviar correo
     with smtplib.SMTP(smtp_server, port) as server:
         server.starttls()
         server.login(sender_email, password)
-        text = message.as_string()
-        server.sendmail(sender_email, receiver_email, text)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+
+    # Imprimir mensaje de éxito
+    print("El correo se ha enviado correctamente.")
+
+    
+
+    
+    
+
+
 # Ejemplo de uso
 exportar_inventario('inventario.xls', ['P502', 'MZ02'])
+
+enviar_correo()
