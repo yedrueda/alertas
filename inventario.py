@@ -77,7 +77,7 @@ def enviar_correo():
     smtp_server ='smtp.gmail.com'
     port = 587
     sender_email = 'yelkindavid1997@gmail.com'
-    password = 'wfpc eihc ddxy dpvn'
+    password = ''
     receiver_email = 'barbara@lab-ol.com'
 
     # Crear mensaje
